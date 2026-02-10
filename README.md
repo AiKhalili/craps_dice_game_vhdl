@@ -73,7 +73,7 @@ A full system testbench (`tb_dice_game.vhd`) validates correct game behavior acr
 
 ---
 
-# Author
+# Authors
 
 **Zeinab Khalili** and **Fatemeh Shabani**  
 Software Engineering Students  
