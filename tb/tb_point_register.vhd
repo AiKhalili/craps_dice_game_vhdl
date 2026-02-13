@@ -72,6 +72,6 @@ BEGIN
         WAIT FOR 10 ns;
 
         WAIT;
-    END PROCESS
+    END PROCESS;
 
 END behavioral;
