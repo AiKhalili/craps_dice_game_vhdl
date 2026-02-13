@@ -1,7 +1,6 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 
--- Verifies controller FSM functionality for the Dice Craps game
 ENTITY tb_controller IS
 END tb_controller;
 
@@ -25,16 +24,19 @@ ARCHITECTURE behavior OF tb_controller IS
 
 BEGIN
 
-    -- Clock generation (10 ns period)
-    PROCESS
+    -- Clock generation
+    clk_process : PROCESS
     BEGIN
-        clk <= '0';
-        WAIT FOR clk_period/2;
-        clk <= '1';
-        WAIT FOR clk_period/2;
+        LOOP
+            clk <= '0';
+            WAIT FOR clk_period/2;
+            clk <= '1';
+            WAIT FOR clk_period/2;
+        END LOOP;
     END PROCESS;
 
-    controller_inst : ENTITY work.controller
+    -- Instantiate controller
+    uut : ENTITY work.controller
         PORT MAP(
             clk => clk,
             reset => reset,
@@ -46,91 +48,95 @@ BEGIN
             win => win,
             lose => lose,
             Sp => Sp,
-            roll => roll
+            roll => roll,
+            sum_ld => OPEN,
+            point_phase => OPEN
         );
 
-    PROCESS
+    -- Stimulus
+    stim_proc : PROCESS
     BEGIN
-
-        -- Test 1: Reset FSM and start new game
+        -- Reset FSM
         reset <= '1';
         WAIT FOR 2 * clk_period;
         reset <= '0';
         WAIT FOR clk_period;
 
-        -- First roll: WIN (sum = 7 or 11)
-        enter <= '1'; -- start rolling
-        WAIT FOR 4 * clk_period;
-        enter <= '0'; -- latch first sum
+        -- Test 1: First roll WIN (D711 = 1)
+        enter <= '1'; -- Press roll
+        WAIT FOR 3 * clk_period;
+        enter <= '0'; -- Release roll
 
+        -- Simulate sum evaluation
         D711 <= '1';
-        WAIT FOR clk_period;
+        WAIT FOR 2 * clk_period;
         D711 <= '0';
 
-        WAIT FOR 2 * clk_period;
+        WAIT FOR 5 * clk_period; -- wait for FSM to go to S_WIN
 
-        -- Test 2: Reset and LOSE (sum = 2,3,12)
+        -- Test 2: First roll LOSE (D2312 = 1)
         reset <= '1';
         WAIT FOR 2 * clk_period;
         reset <= '0';
         WAIT FOR clk_period;
 
         enter <= '1';
-        WAIT FOR 4 * clk_period;
+        WAIT FOR 3 * clk_period;
         enter <= '0';
 
         D2312 <= '1';
-        WAIT FOR clk_period;
+        WAIT FOR 2 * clk_period;
         D2312 <= '0';
 
-        WAIT FOR 2 * clk_period;
+        WAIT FOR 5 * clk_period;
 
-        -- Test 3: Point phase : WIN (sum equals stored point)
+        -- Test 3: Point phase WIN (Eq = 1)
         reset <= '1';
         WAIT FOR 2 * clk_period;
         reset <= '0';
         WAIT FOR clk_period;
 
-        -- First roll (point is established)
+        -- First roll (establish point)
         enter <= '1';
-        WAIT FOR 4 * clk_period;
+        WAIT FOR 3 * clk_period;
         enter <= '0';
+        WAIT FOR 2 * clk_period;
 
         -- Second roll
-        WAIT FOR clk_period;
         enter <= '1';
-        WAIT FOR 4 * clk_period;
+        WAIT FOR 3 * clk_period;
         enter <= '0';
+        WAIT FOR 1 * clk_period;
 
-        Eq <= '1'; -- sum == point : WIN
-        WAIT FOR clk_period;
+        Eq <= '1';
+        WAIT FOR 2 * clk_period;
         Eq <= '0';
 
-        WAIT FOR 2 * clk_period;
+        WAIT FOR 5 * clk_period;
 
-        -- Test 4: Point phase : LOSE (sum = 7)
+        -- Test 4: Point phase LOSE (D7 = 1)
         reset <= '1';
         WAIT FOR 2 * clk_period;
         reset <= '0';
         WAIT FOR clk_period;
 
-        -- First roll (point established)
+        -- First roll (establish point)
         enter <= '1';
-        WAIT FOR 4 * clk_period;
+        WAIT FOR 3 * clk_period;
         enter <= '0';
+        WAIT FOR 2 * clk_period;
 
         -- Second roll
-        WAIT FOR clk_period;
         enter <= '1';
-        WAIT FOR 4 * clk_period;
+        WAIT FOR 3 * clk_period;
         enter <= '0';
+        WAIT FOR 1 * clk_period;
 
-        D7 <= '1'; -- sum = 7 : LOSE
-        WAIT FOR clk_period;
+        D7 <= '1';
+        WAIT FOR 2 * clk_period;
         D7 <= '0';
 
         WAIT;
-
     END PROCESS;
 
 END behavior;
